@@ -1,13 +1,18 @@
+.SECONDARY:
 SRCDIR=src
-OBJDIR=$(SRCDIR)/obj
-LIBDIR=lib
+OBJDIR_BASE=$(SRCDIR)/obj-baseline
+OBJDIR_VECT=$(SRCDIR)/obj-vectorized
+ASMDIR_BASE=$(SRCDIR)/asm-baseline
+ASMDIR_VECT=$(SRCDIR)/asm-vectorized
 INCDIR=include
 OUTDIR=output
 
 CXX=g++
-CXXFLAGS=-I$(INCDIR) -I/usr/local/include -Wall -std=c++23 -g
 
-LIBS = -L/usr/local/lib -Wl,-rpath=/usr/local/lib
+BASELINE_CXXFLAGS=-fno-tree-vectorize
+VECTORIZED_CXXFLAGS=-ftree-vectorize -march=native
+COMMON_CXXFLAGS=-I$(INCDIR) -I/usr/local/include -Wall -std=c++23 -O3
+BUILD_FLAGS=-g
 
 ifdef DEF
 USEDEF=-D $(DEF)
@@ -15,23 +20,39 @@ else
 USEDEF=
 endif
 
-_DEPS=
-DEPS=$(patsubst %,$(INCDIR)/%,$(_DEPS))
+FILES=experiment1 experiment2
 
-_OBJ=main.o
-OBJ=$(patsubst %,$(OBJDIR)/%,$(_OBJ))
+all: \
+	$(patsubst %,$(OUTDIR)/%-baseline,$(FILES)) \
+	$(patsubst %,$(OUTDIR)/%-vectorized,$(FILES)) \
+	$(patsubst %,$(ASMDIR_BASE)/%.s,$(FILES)) \
+	$(patsubst %,$(ASMDIR_VECT)/%.s,$(FILES))
 
-EXE=main
+$(OBJDIR_BASE)/%.o: $(SRCDIR)/%.cpp
+	mkdir -p $(OBJDIR_BASE)
+	$(CXX) -c -o $@ $< $(COMMON_CXXFLAGS) $(BASELINE_CXXFLAGS) $(BUILD_FLAGS) $(USEDEF)
 
-all: $(EXE)
+$(OBJDIR_VECT)/%.o: $(SRCDIR)/%.cpp
+	mkdir -p $(OBJDIR_VECT)
+	$(CXX) -c -o $@ $< $(COMMON_CXXFLAGS) $(VECTORIZED_CXXFLAGS) $(BUILD_FLAGS) $(USEDEF)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
-	$(CXX) -c -o $@ $< $(CXXFLAGS) $(USEDEF)
+$(ASMDIR_BASE)/%.s: $(SRCDIR)/%.cpp
+	mkdir -p $(ASMDIR_BASE)
+	$(CXX) -S -fverbose-asm -o $@ $< $(COMMON_CXXFLAGS) $(BASELINE_CXXFLAGS) $(USEDEF)
 
-$(EXE): $(OBJ)
-	$(CXX) -o $(OUTDIR)/$@ $^ $(CXXFLAGS) $(LIBS) $(USEDEF)
+$(ASMDIR_VECT)/%.s: $(SRCDIR)/%.cpp
+	mkdir -p $(ASMDIR_VECT)
+	$(CXX) -S -fverbose-asm -o $@ $< $(COMMON_CXXFLAGS) $(VECTORIZED_CXXFLAGS) $(USEDEF)
+
+$(OUTDIR)/%-baseline: $(OBJDIR_BASE)/%.o
+	mkdir -p $(OUTDIR)
+	$(CXX) -o $@ $^ $(COMMON_CXXFLAGS) $(BASELINE_CXXFLAGS) $(BUILD_FLAGS) $(USEDEF)
+
+$(OUTDIR)/%-vectorized: $(OBJDIR_VECT)/%.o
+	mkdir -p $(OUTDIR)
+	$(CXX) -o $@ $^ $(COMMON_CXXFLAGS) $(VECTORIZED_CXXFLAGS) $(BUILD_FLAGS) $(USEDEF)
 
 .PHONY: clean
 
 clean:
-	rm -f $(OBJDIR)/*.o *~ core $(INCDIR)/*~ $(OUTDIR)/$(EXE)
+	rm -rf $(OBJDIR_BASE) $(OBJDIR_VECT) $(ASMDIR_BASE) $(ASMDIR_VECT) *~ core $(INCDIR)/*~ $(OUTDIR)/*-baseline $(OUTDIR)/*-vectorized

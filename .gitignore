@@ -1,5 +1,6 @@
 .cache/
 output/
-obj/
+obj-*/
+asm-*/
 
 compile_commands.json
