@@ -5,6 +5,58 @@
 library(ggplot2)
 library(tidyverse)
 
+# EXPERIMENT 1
+
+exp1base <- read.csv("csvs/experiment1-baseline.csv") %>% mutate(source = "Baseline")
+exp1vect <- read.csv("csvs/experiment1-vectorized.csv") %>% mutate(source = "Vectorized")
+
+data_long <- exp1base %>%
+  pivot_longer(cols = c(avg_time_ns, avg_cycles),
+               names_to = "metric",
+               values_to = "avg") %>%
+  mutate(min = ifelse(metric == "avg_time_ns", min_time_ns, min_cycles),
+         max = ifelse(metric == "avg_time_ns", max_time_ns, max_cycles),
+         length = recode(length,
+                         "L1_ARR_LENGTH" = "L1",
+                         "L2_ARR_LENGTH" = "L2",
+                         "L3_ARR_LENGTH" = "L3",
+                         "DRAM_ARR_LENGTH" = "DRAM")
+  )
+
+data_long$length <- factor(data_long$length, levels = c("L1", "L2", "L3", "DRAM"))
+
+kernels <- unique(exp1base$kernel)
+
+for (k in kernels) {
+  plot_data <- filter(data_long, kernel == k)
+
+  # Compute separate scales for each metric for plotting
+  time_max <- max(plot_data$max[plot_data$metric == "avg_time_ns"])
+  cycles_max <- max(plot_data$max[plot_data$metric == "avg_cycles"])
+  scale_factor <- time_max / cycles_max
+
+  plot_data <- plot_data %>%
+    mutate(scaled_avg = ifelse(metric == "avg_cycles", avg * scale_factor, avg),
+           scaled_min = ifelse(metric == "avg_cycles", min * scale_factor, min),
+           scaled_max = ifelse(metric == "avg_cycles", max * scale_factor, max))
+
+  p <- ggplot(plot_data, aes(x = length, y = scaled_avg, fill = metric)) +
+    geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+    geom_errorbar(aes(ymin = scaled_min, ymax = scaled_max), position = position_dodge(width = 0.9), width = 0.25) +
+    scale_fill_manual(values = c("avg_time_ns" = "skyblue", "avg_cycles" = "orange"),
+                      labels = c("Time (ns)", "Cycles")) +
+    scale_y_continuous(
+      name = "Time (ns)",
+      sec.axis = sec_axis(~. / scale_factor, name = "Cycles")
+    ) +
+    labs(title = paste("Kernel:", k), x = "Length", fill = "Metric") +
+    theme_classic()
+
+  print(p)
+}
+
+# EXPERIMENT 2
+
 # Load CSV
 exp2base <- read.csv("csvs/experiment2-baseline.csv") %>% mutate(source = "Baseline")
 exp2vect <- read.csv("csvs/experiment2-vectorized.csv") %>% mutate(source = "Vectorized")
@@ -15,10 +67,17 @@ vlines <- c(30038, 567979, 1048577)
 # Combine into one dataframe
 exp2 <- bind_rows(exp2base, exp2vect)
 
+exp2 <- exp2 %>%
+  mutate(section = cut(length, breaks = c(-Inf, vlines, Inf), labels = paste0("S", 1:(length(vlines) + 1))))
+
+section_colors <- c("S1" = "#999999", "S2" = "#666666", "S3" = "#333333", "S4" = "#000000")
+
 ggplot(exp2, aes(x = length, y = avg_time_ns, color = source, fill = source)) +
   geom_line(linewidth = 1) +
   geom_ribbon(aes(ymin = min_time_ns, ymax = max_time_ns), alpha = 0.2, color = NA) +
   geom_vline(xintercept = vlines, linetype = "dashed", color = "darkgrey") +
+  geom_smooth(data = filter(exp2, source == "Baseline"), aes(group = interaction(source, section)), method = "lm", se = FALSE, linetype = "dotdash", color = "cyan") +
+  geom_smooth(data = filter(exp2, source == "Vectorized"), aes(group = interaction(source, section)), method = "lm", se = FALSE, linetype = "dotdash", color = "pink") +
   labs(title = "Experiment 2 Performance (time)",
        x = "Array Length",
        y = "Time (ns)") +
@@ -30,6 +89,8 @@ ggplot(exp2, aes(x = length, y = avg_cycles / length, color = source, fill = sou
   geom_line(linewidth = 1) +
   geom_ribbon(aes(ymin = min_cycles / length, ymax = max_cycles / length), alpha = 0.2, color = NA) +
   geom_vline(xintercept = vlines, linetype = "dashed", color = "darkgrey") +
+  geom_smooth(data = filter(exp2, source == "Baseline"), aes(group = interaction(source, section)), method = "lm", se = FALSE, linetype = "dotdash", color = "cyan") +
+  geom_smooth(data = filter(exp2, source == "Vectorized"), aes(group = interaction(source, section)), method = "lm", se = FALSE, linetype = "dotdash", color = "pink") +
   labs(title = "Experiment 2 Performance (CPE)",
        x = "Array Length",
        y = "Cycles") +

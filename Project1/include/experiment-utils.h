@@ -55,10 +55,60 @@ using timespan = std::chrono::duration<double, std::nano>;
                  "Max cycles: " << maxCycles << std::endl; \
 }
 
+#define WARM3(ARR1, ARR2, ARR3, LENGTH) { \
+    [[maybe_unused]] volatile float sink; \
+    for (size_t i = 0; i < LENGTH; ++i) \
+    { \
+        sink = ARR1[i]; \
+        sink = ARR2[i]; \
+        sink = ARR3[i]; \
+    } \
+}
+
+#define WARM2(ARR1, ARR2, LENGTH) { \
+    [[maybe_unused]] volatile float sink; \
+    for (size_t i = 0; i < LENGTH; ++i) \
+    { \
+        sink = ARR1[i]; \
+        sink = ARR2[i]; \
+    } \
+}
+
 // OTHER MACROS
 
 // Random values generated in range [-LIMIT, LIMIT]
 #define LIMIT 10000
+
+// TESTS
+
+template <typename T>
+void streaming_fma(int scalar, T arr1[], T arr2[], T output[], size_t length, size_t stride = 1)
+{
+    for (size_t i = 0; i < length; i += stride)
+        output[i] = scalar * arr1[i] + arr2[i];
+
+    (void)output; // Prevent compiler from optimizing away `output`
+}
+
+template <typename T>
+void reduction(T arr1[], T arr2[], size_t length)
+{
+    float output = 0;
+
+    for (size_t i = 0; i < length; ++i)
+        output += arr1[i] * arr2[i];
+
+    (void)output; // Prevent compiler from optimizing away `output`
+}
+
+template <typename T>
+void element_multiply(T arr1[], T arr2[], T output[], size_t length)
+{
+    for (size_t i = 0; i < length; ++i)
+        output[i] = arr1[i] * arr2[i];
+
+    (void)output; // Prevent compiler from optimizing away `output`
+}
 
 // HELPER FUNCTIONS
 

@@ -10,7 +10,7 @@ OUTDIR=output
 CXX=g++
 
 BASELINE_CXXFLAGS=-fno-tree-vectorize
-VECTORIZED_CXXFLAGS=-ftree-vectorize -march=native
+VECTORIZED_CXXFLAGS=-ftree-vectorize -march=native -funsafe-math-optimizations
 COMMON_CXXFLAGS=-I$(INCDIR) -I/usr/local/include -Wall -std=c++23 -O3
 BUILD_FLAGS=-g
 
@@ -20,7 +20,7 @@ else
 USEDEF=
 endif
 
-FILES=experiment1 experiment2
+FILES=experiment1 experiment2 experiment3 experiment4
 
 all: \
 	$(patsubst %,$(OUTDIR)/%-baseline,$(FILES)) \
@@ -30,11 +30,11 @@ all: \
 
 $(OBJDIR_BASE)/%.o: $(SRCDIR)/%.cpp
 	mkdir -p $(OBJDIR_BASE)
-	$(CXX) -c -o $@ $< $(COMMON_CXXFLAGS) $(BASELINE_CXXFLAGS) $(BUILD_FLAGS) $(USEDEF)
+	$(CXX) -c -o $@ $< $(COMMON_CXXFLAGS) $(BASELINE_CXXFLAGS) $(BUILD_FLAGS) -fopt-info-vec-all=$(OBJDIR_BASE)/$*-vec-report.txt $(USEDEF)
 
 $(OBJDIR_VECT)/%.o: $(SRCDIR)/%.cpp
 	mkdir -p $(OBJDIR_VECT)
-	$(CXX) -c -o $@ $< $(COMMON_CXXFLAGS) $(VECTORIZED_CXXFLAGS) $(BUILD_FLAGS) $(USEDEF)
+	$(CXX) -c -o $@ $< $(COMMON_CXXFLAGS) $(VECTORIZED_CXXFLAGS) $(BUILD_FLAGS) -fopt-info-vec-all=$(OBJDIR_VECT)/$*-vec-report.txt $(USEDEF)
 
 $(ASMDIR_BASE)/%.s: $(SRCDIR)/%.cpp
 	mkdir -p $(ASMDIR_BASE)
