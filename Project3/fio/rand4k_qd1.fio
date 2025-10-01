@@ -1,0 +1,12 @@
+[randread4k]
+ioengine=libaio
+direct=1
+runtime=60
+time_based
+group_reporting
+filename=/dev/nvme0n1p2
+bs=4k
+iodepth=1
+rw=randread
+numjobs=1
+percentile_list=95:99

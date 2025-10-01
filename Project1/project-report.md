@@ -1,4 +1,7 @@
 # Project 1
+## General Info
+Computer/CPU info can be found in the README at the root of this repository
+
 ## Usage
 The default `make` target will create a baseline and vectorized build of each
 source file, as well as assembly outputs (in `src/asm-*/`) and vectorization

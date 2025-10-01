@@ -25,6 +25,14 @@ reccomended in Project 2. This was used for all testing.
 
 SMT State: 2 threads per core
 
+## NVMe Info
+
+Model: WD PC SN740 SDDQNQD-512G-1201
+Firmware Revision: 73117101
+Size: 512GB (actual)
+Speed: 16GT/s
+Width: x4
+
 ## General Info
 
 Computer: Lenovo ThinkPad T16 Gen 2

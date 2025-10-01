@@ -1,0 +1,12 @@
+[seqread128k]
+ioengine=libaio
+direct=1
+runtime=60
+time_based
+group_reporting
+filename=/dev/nvme0n1p2
+bs=128k
+iodepth=1
+rw=read
+numjobs=1
+percentile_list=95:99
