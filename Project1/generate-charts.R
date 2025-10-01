@@ -10,7 +10,9 @@ library(tidyverse)
 exp1base <- read.csv("csvs/experiment1-baseline.csv") %>% mutate(source = "Baseline")
 exp1vect <- read.csv("csvs/experiment1-vectorized.csv") %>% mutate(source = "Vectorized")
 
-data_long <- exp1base %>%
+exp1 <- bind_rows(exp1base, exp1vect)
+
+data_long <- exp1 %>%
   pivot_longer(cols = c(avg_time_ns, avg_cycles),
                names_to = "metric",
                values_to = "avg") %>%
@@ -20,12 +22,19 @@ data_long <- exp1base %>%
                          "L1_ARR_LENGTH" = "L1",
                          "L2_ARR_LENGTH" = "L2",
                          "L3_ARR_LENGTH" = "L3",
-                         "DRAM_ARR_LENGTH" = "DRAM")
+                         "DRAM_ARR_LENGTH" = "DRAM"),
+        length_source = paste(length, source)
   )
 
-data_long$length <- factor(data_long$length, levels = c("L1", "L2", "L3", "DRAM"))
+data_long$length_source <- factor(
+  data_long$length_source,
+  levels = c("L1 Baseline", "L1 Vectorized",
+             "L2 Baseline", "L2 Vectorized",
+             "L3 Baseline", "L3 Vectorized",
+             "DRAM Baseline", "DRAM Vectorized")
+)
 
-kernels <- unique(exp1base$kernel)
+kernels <- unique(data_long$kernel)
 
 for (k in kernels) {
   plot_data <- filter(data_long, kernel == k)
@@ -40,7 +49,7 @@ for (k in kernels) {
            scaled_min = ifelse(metric == "avg_cycles", min * scale_factor, min),
            scaled_max = ifelse(metric == "avg_cycles", max * scale_factor, max))
 
-  p <- ggplot(plot_data, aes(x = length, y = scaled_avg, fill = metric)) +
+  p <- ggplot(plot_data, aes(x = length_source, y = scaled_avg, fill = metric)) +
     geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
     geom_errorbar(aes(ymin = scaled_min, ymax = scaled_max), position = position_dodge(width = 0.9), width = 0.25) +
     scale_fill_manual(values = c("avg_time_ns" = "skyblue", "avg_cycles" = "orange"),
@@ -49,8 +58,9 @@ for (k in kernels) {
       name = "Time (ns)",
       sec.axis = sec_axis(~. / scale_factor, name = "Cycles")
     ) +
-    labs(title = paste("Kernel:", k), x = "Length", fill = "Metric") +
-    theme_classic()
+    labs(title = paste("Experiment 1 Performance (Kernel ", k, ")", sep = ""), x = "Length", fill = "Metric") +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
   print(p)
 }
@@ -97,3 +107,171 @@ ggplot(exp2, aes(x = length, y = avg_cycles / length, color = source, fill = sou
   scale_color_manual(values = c("blue", "red")) +
   scale_fill_manual(values = c("blue", "red")) +
   theme_classic()
+
+# Experiment 3
+
+# Load both files
+exp3base <- read.csv("csvs/experiment3-baseline.csv") %>% mutate(source = "Baseline")
+exp3vect <- read.csv("csvs/experiment3-vectorized.csv") %>% mutate(source = "Vectorized")
+
+# Combine
+exp3 <- bind_rows(exp3base, exp3vect)
+
+# Pivot long so that time and cycles are both in one column
+data_long <- exp3 %>%
+  pivot_longer(cols = c(avg_time_ns, avg_cycles),
+               names_to = "metric",
+               values_to = "avg") %>%
+  mutate(min = ifelse(metric == "avg_time_ns", min_time_ns, min_cycles),
+         max = ifelse(metric == "avg_time_ns", max_time_ns, max_cycles),
+         combo = paste(
+           ifelse(alignment == "aligned", "Aligned", "Misaligned"),
+           ifelse(tail == "tail", "Tail", "No-Tail"),
+           source
+         ))
+
+# Define explicit order of bars
+data_long$combo <- factor(
+  data_long$combo,
+  levels = c("Aligned No-Tail Baseline", "Aligned No-Tail Vectorized",
+             "Aligned Tail Baseline",    "Aligned Tail Vectorized",
+             "Misaligned No-Tail Baseline", "Misaligned No-Tail Vectorized",
+             "Misaligned Tail Baseline",    "Misaligned Tail Vectorized")
+)
+
+# Compute scale factor for dual axis
+time_max   <- max(data_long$max[data_long$metric == "avg_time_ns"])
+cycles_max <- max(data_long$max[data_long$metric == "avg_cycles"])
+scale_factor <- time_max / cycles_max
+
+plot_data <- data_long %>%
+  mutate(scaled_avg = ifelse(metric == "avg_cycles", avg * scale_factor, avg),
+         scaled_min = ifelse(metric == "avg_cycles", min * scale_factor, min),
+         scaled_max = ifelse(metric == "avg_cycles", max * scale_factor, max))
+
+# Plot
+p <- ggplot(plot_data, aes(x = combo, y = scaled_avg, fill = metric)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(ymin = scaled_min, ymax = scaled_max),
+                position = position_dodge(width = 0.9), width = 0.25) +
+  scale_fill_manual(values = c("avg_time_ns" = "skyblue", "avg_cycles" = "orange"),
+                    labels = c("Time (ns)", "Cycles")) +
+  scale_y_continuous(
+    name = "Time (ns)",
+    sec.axis = sec_axis(~. / scale_factor, name = "Cycles")
+  ) +
+  labs(title = "Experiment 3 Performance", x = "", fill = "Metric") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))  # tilt labels
+
+print(p)
+
+# Experiment 4
+
+# Load both CSVs
+exp4base <- read.csv("csvs/experiment4-baseline.csv") %>% mutate(source = "Baseline")
+exp4vect <- read.csv("csvs/experiment4-vectorized.csv") %>% mutate(source = "Vectorized")
+
+# Combine
+exp4 <- bind_rows(exp4base, exp4vect)
+
+# Pivot long: put time/cycles into one column
+data_long <- exp4 %>%
+  pivot_longer(cols = c(avg_time_ns, avg_cycles),
+               names_to = "metric",
+               values_to = "avg") %>%
+  mutate(min = ifelse(metric == "avg_time_ns", min_time_ns, min_cycles),
+         max = ifelse(metric == "avg_time_ns", max_time_ns, max_cycles),
+         # Combine stride + source into one x-axis label
+         stride_label = ifelse(stride == "gen", "Random", stride),
+         combo = paste("Stride", stride_label, source))
+
+# Factor for consistent ordering
+data_long$combo <- factor(
+  data_long$combo,
+  levels = c("Stride 1 Baseline",  "Stride 1 Vectorized",
+             "Stride 2 Baseline",  "Stride 2 Vectorized",
+             "Stride 5 Baseline",  "Stride 5 Vectorized",
+             "Stride 16 Baseline", "Stride 16 Vectorized",
+             "Stride 50 Baseline", "Stride 50 Vectorized",
+             "Stride Random Baseline", "Stride Random Vectorized")
+)
+
+# Compute scaling factor for dual axis
+time_max   <- max(data_long$max[data_long$metric == "avg_time_ns"])
+cycles_max <- max(data_long$max[data_long$metric == "avg_cycles"])
+scale_factor <- time_max / cycles_max
+
+plot_data <- data_long %>%
+  mutate(scaled_avg = ifelse(metric == "avg_cycles", avg * scale_factor, avg),
+         scaled_min = ifelse(metric == "avg_cycles", min * scale_factor, min),
+         scaled_max = ifelse(metric == "avg_cycles", max * scale_factor, max))
+
+# Plot
+p <- ggplot(plot_data, aes(x = combo, y = scaled_avg, fill = metric)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(ymin = scaled_min, ymax = scaled_max),
+                position = position_dodge(width = 0.9), width = 0.25) +
+  scale_fill_manual(values = c("avg_time_ns" = "skyblue", "avg_cycles" = "orange"),
+                    labels = c("Time (ns)", "Cycles")) +
+  scale_y_continuous(
+    name = "Time (ns)",
+    sec.axis = sec_axis(~. / scale_factor, name = "Cycles")
+  ) +
+  labs(title = "Experiment 4 Performance", x = "", fill = "Metric") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # tilt labels
+
+print(p)
+
+# Experiment 5
+
+# Load both CSVs
+exp5base <- read.csv("csvs/experiment5-baseline.csv") %>% mutate(source = "Baseline")
+exp5vect <- read.csv("csvs/experiment5-vectorized.csv") %>% mutate(source = "Vectorized")
+
+# Combine
+exp5 <- bind_rows(exp5base, exp5vect)
+
+# Pivot long so both metrics are in one column
+data_long <- exp5 %>%
+  pivot_longer(cols = c(avg_time_ns, avg_cycles),
+               names_to = "metric",
+               values_to = "avg") %>%
+  mutate(min = ifelse(metric == "avg_time_ns", min_time_ns, min_cycles),
+         max = ifelse(metric == "avg_time_ns", max_time_ns, max_cycles),
+         combo = paste("Float", bits, " ", source, sep = ""))
+
+# Order the axis
+data_long$combo <- factor(
+  data_long$combo,
+  levels = c("Float32 Baseline", "Float32 Vectorized",
+             "Float64 Baseline", "Float64 Vectorized")
+)
+
+# Compute scaling for dual axis
+time_max   <- max(data_long$max[data_long$metric == "avg_time_ns"])
+cycles_max <- max(data_long$max[data_long$metric == "avg_cycles"])
+scale_factor <- time_max / cycles_max
+
+plot_data <- data_long %>%
+  mutate(scaled_avg = ifelse(metric == "avg_cycles", avg * scale_factor, avg),
+         scaled_min = ifelse(metric == "avg_cycles", min * scale_factor, min),
+         scaled_max = ifelse(metric == "avg_cycles", max * scale_factor, max))
+
+# Plot
+p <- ggplot(plot_data, aes(x = combo, y = scaled_avg, fill = metric)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(ymin = scaled_min, ymax = scaled_max),
+                position = position_dodge(width = 0.9), width = 0.25) +
+  scale_fill_manual(values = c("avg_time_ns" = "skyblue", "avg_cycles" = "orange"),
+                    labels = c("Time (ns)", "Cycles")) +
+  scale_y_continuous(
+    name = "Time (ns)",
+    sec.axis = sec_axis(~. / scale_factor, name = "Cycles")
+  ) +
+  labs(title = "Experiment 5 Performance", x = "", fill = "Metric") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(p)

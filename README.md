@@ -20,12 +20,19 @@ Cache sizes:
 * L3:   12 MiB (1 instance)
 
 My laptop does not support userspace CPU governor, so while I can't fix the
-frequency, I can set the governor to `powersave` since I figured that if I
-capped the CPU at a lower frequency, it was more likely to run at that limit
-than if I let it run full-speed, in which case it may throttle/slow down.
+frequency, I can set the governor to `performance` since that is what was
+reccomended in Project 2. This was used for all testing.
 
 SMT State: 2 threads per core
 
 ## General Info
+
+Computer: Lenovo ThinkPad T16 Gen 2
+
+Operating System: KDE neon User Edition (based on Ubuntu 24.04 LTS)
+
+Linux Kernel Version: 6.14.0-32-generic (64-bit)
+
+RAM: 32 GiB
 
 Compiler used: g++ version 14.2

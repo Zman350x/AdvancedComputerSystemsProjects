@@ -18,16 +18,16 @@ int main(int argc, char* argv[])
     // Generate input arrays
 
     std::cout << "Creating float32 arrays" << std::endl;
-    float f32_arr1[ARR_LENGTH];
-    float f32_arr2[ARR_LENGTH];
-    float f32_out[ARR_LENGTH] = { 0 };
+    alignas(32) float f32_arr1[ARR_LENGTH];
+    alignas(32) float f32_arr2[ARR_LENGTH];
+    alignas(32) float f32_out[ARR_LENGTH] = { 0 };
     fillArrayRandomDecimal(f32_arr1, ARR_LENGTH, gen);
     fillArrayRandomDecimal(f32_arr2, ARR_LENGTH, gen);
 
     std::cout << "Creating float64 arrays" << std::endl;
-    double f64_arr1[ARR_LENGTH];
-    double f64_arr2[ARR_LENGTH];
-    double f64_out[ARR_LENGTH] = { 0 };
+    alignas(32) double f64_arr1[ARR_LENGTH];
+    alignas(32) double f64_arr2[ARR_LENGTH];
+    alignas(32) double f64_out[ARR_LENGTH] = { 0 };
     fillArrayRandomDecimal(f64_arr1, ARR_LENGTH, gen);
     fillArrayRandomDecimal(f64_arr2, ARR_LENGTH, gen);
 

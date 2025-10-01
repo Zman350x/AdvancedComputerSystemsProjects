@@ -25,9 +25,9 @@ int main(int argc, char* argv[])
         // Generate input arrays
 
         std::cout << "Creating arrays of length " << i << std::endl;
-        float f32_arr1[i];
-        float f32_arr2[i];
-        float f32_out[i];
+        alignas(32) float f32_arr1[i];
+        alignas(32) float f32_arr2[i];
+        alignas(32) float f32_out[i];
         fillArrayRandomDecimal(f32_arr1, i, gen);
         fillArrayRandomDecimal(f32_arr2, i, gen);
         memset(f32_out, '\0', sizeof(float) * i);
