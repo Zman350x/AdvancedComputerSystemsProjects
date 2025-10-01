@@ -5,7 +5,7 @@
 #define MISALIGN(...) reinterpret_cast<float*>(reinterpret_cast<uint8_t*>(__VA_ARGS__) + 1)
 
 // Test constants
-// NOTAIL is a multiple of 256, whereas TAIL is not
+// NOTAIL is a multiple of 8, whereas TAIL is not
 #define NOTAIL_LENGTH 524288
 #define TAIL_LENGTH 524475
 

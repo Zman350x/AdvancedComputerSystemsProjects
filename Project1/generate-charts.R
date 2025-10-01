@@ -10,7 +10,20 @@ library(tidyverse)
 exp1base <- read.csv("csvs/experiment1-baseline.csv") %>% mutate(source = "Baseline")
 exp1vect <- read.csv("csvs/experiment1-vectorized.csv") %>% mutate(source = "Vectorized")
 
-exp1 <- bind_rows(exp1base, exp1vect)
+flop_map <- c("streaming_fma" = 2,
+              "reduction" = 2,
+              "element_multiply" = 1)
+
+length_map <- c("L1_ARR_LENGTH" = 20000,
+                "L2_ARR_LENGTH" = 500000,
+                "L3_ARR_LENGTH" = 1000000,
+                "DRAM_ARR_LENGTH" = 5000000)
+
+exp1 <- bind_rows(exp1base, exp1vect) %>%
+  mutate(arr_len = length_map[length],
+         flop_count = flop_map[kernel],
+         gflops = flop_count * arr_len / avg_time_ns,
+         gflops = round(gflops, 3))   # round nicely
 
 data_long <- exp1 %>%
   pivot_longer(cols = c(avg_time_ns, avg_cycles),
@@ -38,6 +51,24 @@ kernels <- unique(data_long$kernel)
 
 for (k in kernels) {
   plot_data <- filter(data_long, kernel == k)
+
+  ratio_tbl <- exp1 %>%
+    filter(kernel == k) %>%
+    select(length, source, avg_time_ns) %>%
+    pivot_wider(names_from = source, values_from = avg_time_ns) %>%
+    mutate(ratio = Baseline / Vectorized)
+
+  cat("\nKernel:", k, "\n")
+  print(ratio_tbl %>% select(length, ratio))
+
+  for (len in names(length_map)) {
+    base_val <- exp1 %>% filter(kernel == k, length == len, source == "Baseline") %>% pull(gflops)
+    vect_val <- exp1 %>% filter(kernel == k, length == len, source == "Vectorized") %>% pull(gflops)
+    if (length(base_val) == 0 || length(vect_val) == 0) next
+    cat(len,
+        sprintf("Baseline: %.3f GFLOP/s | Vectorized: %.3f GFLOP/s\n",
+                base_val, vect_val))
+  }
 
   # Compute separate scales for each metric for plotting
   time_max <- max(plot_data$max[plot_data$metric == "avg_time_ns"])
@@ -87,7 +118,7 @@ ggplot(exp2, aes(x = length, y = avg_time_ns, color = source, fill = source)) +
   geom_ribbon(aes(ymin = min_time_ns, ymax = max_time_ns), alpha = 0.2, color = NA) +
   geom_vline(xintercept = vlines, linetype = "dashed", color = "darkgrey") +
   geom_smooth(data = filter(exp2, source == "Baseline"), aes(group = interaction(source, section)), method = "lm", se = FALSE, linetype = "dotdash", color = "cyan") +
-  geom_smooth(data = filter(exp2, source == "Vectorized"), aes(group = interaction(source, section)), method = "lm", se = FALSE, linetype = "dotdash", color = "pink") +
+  geom_smooth(data = filter(exp2, source == "Vectorized"), aes(group = interaction(source, section)), method = "lm", se = FALSE, linetype = "dotdash", color = "red4") +
   labs(title = "Experiment 2 Performance (time)",
        x = "Array Length",
        y = "Time (ns)") +
@@ -100,7 +131,7 @@ ggplot(exp2, aes(x = length, y = avg_cycles / length, color = source, fill = sou
   geom_ribbon(aes(ymin = min_cycles / length, ymax = max_cycles / length), alpha = 0.2, color = NA) +
   geom_vline(xintercept = vlines, linetype = "dashed", color = "darkgrey") +
   geom_smooth(data = filter(exp2, source == "Baseline"), aes(group = interaction(source, section)), method = "lm", se = FALSE, linetype = "dotdash", color = "cyan") +
-  geom_smooth(data = filter(exp2, source == "Vectorized"), aes(group = interaction(source, section)), method = "lm", se = FALSE, linetype = "dotdash", color = "pink") +
+  geom_smooth(data = filter(exp2, source == "Vectorized"), aes(group = interaction(source, section)), method = "lm", se = FALSE, linetype = "dotdash", color = "red4") +
   labs(title = "Experiment 2 Performance (CPE)",
        x = "Array Length",
        y = "Cycles") +

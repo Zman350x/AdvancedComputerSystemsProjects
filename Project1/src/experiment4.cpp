@@ -68,7 +68,9 @@ int main(int argc, char* argv[])
 template <typename T, typename RNG>
 void streaming_fma_random(int scalar, T arr1[], T arr2[], T output[], size_t length, RNG& gen)
 {
-    for (size_t i = 0; i < length; i += std::uniform_int_distribution(1, 5)(gen))
+    static std::uniform_int_distribution dist(1, 5);
+
+    for (size_t i = 0; i < length; i += dist(gen))
         output[i] = scalar * arr1[i] + arr2[i];
 
     (void)output; // Prevent compiler from optimizing away `output`
