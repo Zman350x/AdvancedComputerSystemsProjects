@@ -10,7 +10,7 @@ OUTDIR=output
 CXX=g++
 
 BASELINE_CXXFLAGS=-fno-tree-vectorize
-VECTORIZED_CXXFLAGS=-ftree-vectorize -march=native -funsafe-math-optimizations
+VECTORIZED_CXXFLAGS=-ftree-vectorize -march=native -funsafe-math-optimizations -fopenmp-simd
 COMMON_CXXFLAGS=-I$(INCDIR) -I/usr/local/include -Wall -std=c++23 -O3
 BUILD_FLAGS=-g
 
@@ -20,7 +20,7 @@ else
 USEDEF=
 endif
 
-FILES=experiment1 experiment2 experiment3 experiment4
+FILES=experiment1 experiment2 experiment3 experiment4 experiment5
 
 all: \
 	$(patsubst %,$(OUTDIR)/%-baseline,$(FILES)) \

@@ -1,10 +1,16 @@
 #include "experiment-utils.h"
 #include <cstring>
+#include <random>
 
 // MACROS
 
 // Test constants
 #define ARR_LENGTH 500000
+
+// TEMPLATES
+
+template <typename T, typename RNG>
+void streaming_fma_random(int scalar, T arr1[], T arr2[], T output[], size_t length, RNG& gen);
 
 // MAIN
 
@@ -29,8 +35,42 @@ int main(int argc, char* argv[])
     memset(f32_out, '\0', sizeof(float) * ARR_LENGTH);
 
     // KERNEL TESTS
+
+    // Stride of 1
     WARM3(f32_arr1, f32_arr2, f32_out, i);
-    TIME(streaming_fma(scalar, f32_arr1, f32_arr2, f32_out, ARR_LENGTH));
+    TIME(streaming_fma(scalar, f32_arr1, f32_arr2, f32_out, ARR_LENGTH, 1));
+
+    // Stride of 2
+    WARM3(f32_arr1, f32_arr2, f32_out, i);
+    TIME(streaming_fma(scalar, f32_arr1, f32_arr2, f32_out, ARR_LENGTH, 2));
+
+    // Stride of 5
+    WARM3(f32_arr1, f32_arr2, f32_out, i);
+    TIME(streaming_fma(scalar, f32_arr1, f32_arr2, f32_out, ARR_LENGTH, 5));
+
+    // Stride of 16
+    WARM3(f32_arr1, f32_arr2, f32_out, i);
+    TIME(streaming_fma(scalar, f32_arr1, f32_arr2, f32_out, ARR_LENGTH, 16));
+
+    // Stride of 50
+    WARM3(f32_arr1, f32_arr2, f32_out, i);
+    TIME(streaming_fma(scalar, f32_arr1, f32_arr2, f32_out, ARR_LENGTH, 50));
+
+    // Stride of random (between 1 and 5 every step, not the same throughout)
+    WARM3(f32_arr1, f32_arr2, f32_out, i);
+    TIME(streaming_fma_random(scalar, f32_arr1, f32_arr2, f32_out, ARR_LENGTH, gen));
 
     return 0;
 }
+
+// TESTS
+
+template <typename T, typename RNG>
+void streaming_fma_random(int scalar, T arr1[], T arr2[], T output[], size_t length, RNG& gen)
+{
+    for (size_t i = 0; i < length; i += std::uniform_int_distribution(1, 5)(gen))
+        output[i] = scalar * arr1[i] + arr2[i];
+
+    (void)output; // Prevent compiler from optimizing away `output`
+}
+

@@ -152,3 +152,287 @@ BEGIN {
     }
 }
 ' > csvs/experiment2-vectorized.csv
+
+output/experiment3-baseline | gawk '
+BEGIN {
+    OFS = ","
+    print "alignment,tail,avg_time_ns,min_time_ns,max_time_ns,avg_cycles,min_cycles,max_cycles"
+}
+
+/^Running/ {
+    line = $0
+    gsub(/\033\[[0-9;]*m/, "", line)   # strip ANSI
+
+    sub(/^Running: /, "", line)
+    sub(/ 10 times$/, "", line)
+
+    # extract arglist
+    if (match(line, /\([^)]*\)/)) {
+        argstr = substr(line, RSTART+1, RLENGTH-2)
+        cnt = split(argstr, parts, ",")
+
+        lastarg = parts[cnt]
+        gsub(/^[ \t]+|[ \t]+$/, "", lastarg)
+
+        # find alignment & tail by searching the first array name
+        firstarg = parts[2]
+        gsub(/^[ \t]+|[ \t]+$/, "", firstarg)
+
+        if (firstarg ~ /misaligned/) {
+            alignment = "misaligned"
+        } else {
+            alignment = "aligned"
+        }
+
+        if (firstarg ~ /notail/) {
+            tail = "notail"
+        } else {
+            tail = "tail"
+        }
+    }
+}
+
+/^Test complete/ {
+    # match the numeric parts; keep tolerant for scientific notation
+    if (match($0, /Average runtime: ([0-9.eE+-]+) ns \| Min runtime: ([0-9.eE+-]+) ns \| Max runtime: ([0-9.eE+-]+) ns \| Average cycles: ([0-9.eE+-]+) \| Min cycles: ([0-9.eE+-]+) \| Max cycles: ([0-9.eE+-]+)/, m)) {
+        avg_time = m[1]
+        min_time = m[2]
+        max_time = m[3]
+        avg_cycles = m[4]
+        min_cycles = m[5]
+        max_cycles = m[6]
+        print alignment, tail, avg_time, min_time, max_time, avg_cycles, min_cycles, max_cycles
+    } else {
+        # fallback: try a looser parse (optional)
+        # print "PARSE_FAIL",$0 > "/dev/stderr"
+    }
+}
+' > csvs/experiment3-baseline.csv
+
+output/experiment3-vectorized | gawk '
+BEGIN {
+    OFS = ","
+    print "alignment,tail,avg_time_ns,min_time_ns,max_time_ns,avg_cycles,min_cycles,max_cycles"
+}
+
+/^Running/ {
+    line = $0
+    gsub(/\033\[[0-9;]*m/, "", line)   # strip ANSI
+
+    sub(/^Running: /, "", line)
+    sub(/ 10 times$/, "", line)
+
+    # extract arglist
+    if (match(line, /\([^)]*\)/)) {
+        argstr = substr(line, RSTART+1, RLENGTH-2)
+        cnt = split(argstr, parts, ",")
+
+        lastarg = parts[cnt]
+        gsub(/^[ \t]+|[ \t]+$/, "", lastarg)
+
+        # find alignment & tail by searching the first array name
+        firstarg = parts[2]
+        gsub(/^[ \t]+|[ \t]+$/, "", firstarg)
+
+        if (firstarg ~ /misaligned/) {
+            alignment = "misaligned"
+        } else {
+            alignment = "aligned"
+        }
+
+        if (firstarg ~ /notail/) {
+            tail = "notail"
+        } else {
+            tail = "tail"
+        }
+    }
+}
+
+/^Test complete/ {
+    # match the numeric parts; keep tolerant for scientific notation
+    if (match($0, /Average runtime: ([0-9.eE+-]+) ns \| Min runtime: ([0-9.eE+-]+) ns \| Max runtime: ([0-9.eE+-]+) ns \| Average cycles: ([0-9.eE+-]+) \| Min cycles: ([0-9.eE+-]+) \| Max cycles: ([0-9.eE+-]+)/, m)) {
+        avg_time = m[1]
+        min_time = m[2]
+        max_time = m[3]
+        avg_cycles = m[4]
+        min_cycles = m[5]
+        max_cycles = m[6]
+        print alignment, tail, avg_time, min_time, max_time, avg_cycles, min_cycles, max_cycles
+    } else {
+        # fallback: try a looser parse (optional)
+        # print "PARSE_FAIL",$0 > "/dev/stderr"
+    }
+}
+' > csvs/experiment3-vectorized.csv
+
+output/experiment4-baseline | gawk '
+BEGIN {
+    OFS = ","
+    print "stride,avg_time_ns,min_time_ns,max_time_ns,avg_cycles,min_cycles,max_cycles"
+}
+
+/^Running/ {
+    line = $0
+    gsub(/\033\[[0-9;]*m/, "", line)   # strip ANSI
+
+    sub(/^Running: /, "", line)
+    sub(/ 10 times$/, "", line)
+
+    # extract arglist
+    if (match(line, /\([^)]*\)/)) {
+        argstr = substr(line, RSTART+1, RLENGTH-2)
+        cnt = split(argstr, parts, ",")
+
+        lastarg = parts[cnt]
+        gsub(/^[ \t]+|[ \t]+$/, "", lastarg)
+    }
+}
+
+/^Test complete/ {
+    # match the numeric parts; keep tolerant for scientific notation
+    if (match($0, /Average runtime: ([0-9.eE+-]+) ns \| Min runtime: ([0-9.eE+-]+) ns \| Max runtime: ([0-9.eE+-]+) ns \| Average cycles: ([0-9.eE+-]+) \| Min cycles: ([0-9.eE+-]+) \| Max cycles: ([0-9.eE+-]+)/, m)) {
+        avg_time = m[1]
+        min_time = m[2]
+        max_time = m[3]
+        avg_cycles = m[4]
+        min_cycles = m[5]
+        max_cycles = m[6]
+        print lastarg, avg_time, min_time, max_time, avg_cycles, min_cycles, max_cycles
+    } else {
+        # fallback: try a looser parse (optional)
+        # print "PARSE_FAIL",$0 > "/dev/stderr"
+    }
+}
+' > csvs/experiment4-baseline.csv
+
+output/experiment4-vectorized | gawk '
+BEGIN {
+    OFS = ","
+    print "stride,avg_time_ns,min_time_ns,max_time_ns,avg_cycles,min_cycles,max_cycles"
+}
+
+/^Running/ {
+    line = $0
+    gsub(/\033\[[0-9;]*m/, "", line)   # strip ANSI
+
+    sub(/^Running: /, "", line)
+    sub(/ 10 times$/, "", line)
+
+    # extract arglist
+    if (match(line, /\([^)]*\)/)) {
+        argstr = substr(line, RSTART+1, RLENGTH-2)
+        cnt = split(argstr, parts, ",")
+
+        lastarg = parts[cnt]
+        gsub(/^[ \t]+|[ \t]+$/, "", lastarg)
+    }
+}
+
+/^Test complete/ {
+    # match the numeric parts; keep tolerant for scientific notation
+    if (match($0, /Average runtime: ([0-9.eE+-]+) ns \| Min runtime: ([0-9.eE+-]+) ns \| Max runtime: ([0-9.eE+-]+) ns \| Average cycles: ([0-9.eE+-]+) \| Min cycles: ([0-9.eE+-]+) \| Max cycles: ([0-9.eE+-]+)/, m)) {
+        avg_time = m[1]
+        min_time = m[2]
+        max_time = m[3]
+        avg_cycles = m[4]
+        min_cycles = m[5]
+        max_cycles = m[6]
+        print lastarg, avg_time, min_time, max_time, avg_cycles, min_cycles, max_cycles
+    } else {
+        # fallback: try a looser parse (optional)
+        # print "PARSE_FAIL",$0 > "/dev/stderr"
+    }
+}
+' > csvs/experiment4-vectorized.csv
+
+output/experiment5-baseline | gawk '
+BEGIN {
+    OFS = ","
+    print "bits,avg_time_ns,min_time_ns,max_time_ns,avg_cycles,min_cycles,max_cycles"
+}
+
+/^Running/ {
+    line = $0
+    gsub(/\033\[[0-9;]*m/, "", line)   # strip ANSI
+
+    sub(/^Running: /, "", line)
+    sub(/ 10 times$/, "", line)
+
+    # extract arglist
+    if (match(line, /\([^)]*\)/)) {
+        argstr = substr(line, RSTART+1, RLENGTH-2)
+        cnt = split(argstr, parts, ",")
+
+        secondarg = parts[3]
+        gsub(/^[ \t]+|[ \t]+$/, "", secondarg)
+        if (secondarg ~ /64/) {
+            bits = "64"
+        } else {
+            bits = "32"
+        }
+
+    }
+}
+
+/^Test complete/ {
+    # match the numeric parts; keep tolerant for scientific notation
+    if (match($0, /Average runtime: ([0-9.eE+-]+) ns \| Min runtime: ([0-9.eE+-]+) ns \| Max runtime: ([0-9.eE+-]+) ns \| Average cycles: ([0-9.eE+-]+) \| Min cycles: ([0-9.eE+-]+) \| Max cycles: ([0-9.eE+-]+)/, m)) {
+        avg_time = m[1]
+        min_time = m[2]
+        max_time = m[3]
+        avg_cycles = m[4]
+        min_cycles = m[5]
+        max_cycles = m[6]
+        print bits, avg_time, min_time, max_time, avg_cycles, min_cycles, max_cycles
+    } else {
+        # fallback: try a looser parse (optional)
+        # print "PARSE_FAIL",$0 > "/dev/stderr"
+    }
+}
+' > csvs/experiment5-baseline.csv
+
+output/experiment5-vectorized | gawk '
+BEGIN {
+    OFS = ","
+    print "bits,avg_time_ns,min_time_ns,max_time_ns,avg_cycles,min_cycles,max_cycles"
+}
+
+/^Running/ {
+    line = $0
+    gsub(/\033\[[0-9;]*m/, "", line)   # strip ANSI
+
+    sub(/^Running: /, "", line)
+    sub(/ 10 times$/, "", line)
+
+    # extract arglist
+    if (match(line, /\([^)]*\)/)) {
+        argstr = substr(line, RSTART+1, RLENGTH-2)
+        cnt = split(argstr, parts, ",")
+
+        secondarg = parts[3]
+        gsub(/^[ \t]+|[ \t]+$/, "", secondarg)
+        if (secondarg ~ /64/) {
+            bits = "64"
+        } else {
+            bits = "32"
+        }
+
+    }
+}
+
+/^Test complete/ {
+    # match the numeric parts; keep tolerant for scientific notation
+    if (match($0, /Average runtime: ([0-9.eE+-]+) ns \| Min runtime: ([0-9.eE+-]+) ns \| Max runtime: ([0-9.eE+-]+) ns \| Average cycles: ([0-9.eE+-]+) \| Min cycles: ([0-9.eE+-]+) \| Max cycles: ([0-9.eE+-]+)/, m)) {
+        avg_time = m[1]
+        min_time = m[2]
+        max_time = m[3]
+        avg_cycles = m[4]
+        min_cycles = m[5]
+        max_cycles = m[6]
+        print bits, avg_time, min_time, max_time, avg_cycles, min_cycles, max_cycles
+    } else {
+        # fallback: try a looser parse (optional)
+        # print "PARSE_FAIL",$0 > "/dev/stderr"
+    }
+}
+' > csvs/experiment5-vectorized.csv

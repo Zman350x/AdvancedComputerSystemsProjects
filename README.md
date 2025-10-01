@@ -25,3 +25,7 @@ capped the CPU at a lower frequency, it was more likely to run at that limit
 than if I let it run full-speed, in which case it may throttle/slow down.
 
 SMT State: 2 threads per core
+
+## General Info
+
+Compiler used: g++ version 14.2

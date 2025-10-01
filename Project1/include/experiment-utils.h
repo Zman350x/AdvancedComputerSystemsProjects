@@ -84,6 +84,9 @@ using timespan = std::chrono::duration<double, std::nano>;
 template <typename T>
 void streaming_fma(int scalar, T arr1[], T arr2[], T output[], size_t length, size_t stride = 1)
 {
+#ifdef _OPENMP
+    #pragma omp simd
+#endif
     for (size_t i = 0; i < length; i += stride)
         output[i] = scalar * arr1[i] + arr2[i];
 
@@ -93,8 +96,11 @@ void streaming_fma(int scalar, T arr1[], T arr2[], T output[], size_t length, si
 template <typename T>
 void reduction(T arr1[], T arr2[], size_t length)
 {
-    float output = 0;
+    T output = 0;
 
+#ifdef _OPENMP
+    #pragma omp simd reduction(+:output)
+#endif
     for (size_t i = 0; i < length; ++i)
         output += arr1[i] * arr2[i];
 
@@ -104,6 +110,9 @@ void reduction(T arr1[], T arr2[], size_t length)
 template <typename T>
 void element_multiply(T arr1[], T arr2[], T output[], size_t length)
 {
+#ifdef _OPENMP
+    #pragma omp simd
+#endif
     for (size_t i = 0; i < length; ++i)
         output[i] = arr1[i] * arr2[i];
 

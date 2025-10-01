@@ -26,30 +26,30 @@ int main(int argc, char* argv[])
     // Generate input arrays
 
     std::cout << "Creating L1 arrays" << std::endl;
-    alignas(32) float f32_l1_arr1[L1_ARR_LENGTH];
-    alignas(32) float f32_l1_arr2[L1_ARR_LENGTH];
-    alignas(32) float f32_l1_out[L1_ARR_LENGTH] = { 0 };
+    float f32_l1_arr1[L1_ARR_LENGTH];
+    float f32_l1_arr2[L1_ARR_LENGTH];
+    float f32_l1_out[L1_ARR_LENGTH] = { 0 };
     fillArrayRandomDecimal(f32_l1_arr1, L1_ARR_LENGTH, gen);
     fillArrayRandomDecimal(f32_l1_arr2, L1_ARR_LENGTH, gen);
 
     std::cout << "Creating L2 arrays" << std::endl;
-    alignas(32) float f32_l2_arr1[L2_ARR_LENGTH];
-    alignas(32) float f32_l2_arr2[L2_ARR_LENGTH];
-    alignas(32) float f32_l2_out[L2_ARR_LENGTH] = { 0 };
+    float f32_l2_arr1[L2_ARR_LENGTH];
+    float f32_l2_arr2[L2_ARR_LENGTH];
+    float f32_l2_out[L2_ARR_LENGTH] = { 0 };
     fillArrayRandomDecimal(f32_l2_arr1, L2_ARR_LENGTH, gen);
     fillArrayRandomDecimal(f32_l2_arr2, L2_ARR_LENGTH, gen);
 
     std::cout << "Creating L3 arrays" << std::endl;
-    alignas(32) float f32_l3_arr1[L3_ARR_LENGTH];
-    alignas(32) float f32_l3_arr2[L3_ARR_LENGTH];
-    alignas(32) float f32_l3_out[L3_ARR_LENGTH] = { 0 };
+    float f32_l3_arr1[L3_ARR_LENGTH];
+    float f32_l3_arr2[L3_ARR_LENGTH];
+    float f32_l3_out[L3_ARR_LENGTH] = { 0 };
     fillArrayRandomDecimal(f32_l3_arr1, L3_ARR_LENGTH, gen);
     fillArrayRandomDecimal(f32_l3_arr2, L3_ARR_LENGTH, gen);
 
     std::cout << "Creating DRAM arrays" << std::endl;
-    alignas(32) float f32_dram_arr1[DRAM_ARR_LENGTH];
-    alignas(32) float f32_dram_arr2[DRAM_ARR_LENGTH];
-    alignas(32) float f32_dram_out[DRAM_ARR_LENGTH] = { 0 };
+    float f32_dram_arr1[DRAM_ARR_LENGTH];
+    float f32_dram_arr2[DRAM_ARR_LENGTH];
+    float f32_dram_out[DRAM_ARR_LENGTH] = { 0 };
     fillArrayRandomDecimal(f32_dram_arr1, DRAM_ARR_LENGTH, gen);
     fillArrayRandomDecimal(f32_dram_arr2, DRAM_ARR_LENGTH, gen);
 

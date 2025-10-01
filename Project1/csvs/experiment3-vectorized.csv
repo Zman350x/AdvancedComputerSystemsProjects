@@ -1,0 +1,5 @@
+alignment,tail,avg_time_ns,min_time_ns,max_time_ns,avg_cycles,min_cycles,max_cycles
+aligned,notail,118.7,64,161,85,28,128
+aligned,tail,44.9,42,57,31,28,34
+misaligned,notail,44.6,42,56,30,28,32
+misaligned,tail,43.7,41,54,30,28,32
