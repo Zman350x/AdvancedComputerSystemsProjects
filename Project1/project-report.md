@@ -196,3 +196,6 @@ include/experiment-utils.h:116:26: optimized: loop vectorized using 32 byte vect
 That confirm that vectorization exists in the other kernels as well. (In this
 example, line 116 of `experiment-utils.h` corresponds to the `for` loop of
 `element_multiply()`.)
+
+## 7) Roofline
+
