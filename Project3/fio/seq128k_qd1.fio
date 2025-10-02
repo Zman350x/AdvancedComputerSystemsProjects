@@ -7,6 +7,6 @@ group_reporting
 filename=/dev/nvme0n1p2
 bs=128k
 iodepth=1
-rw=read
+rw=rw
 numjobs=1
 percentile_list=95:99
