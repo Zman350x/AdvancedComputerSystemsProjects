@@ -201,4 +201,5 @@ example, line 116 of `experiment-utils.h` corresponds to the `for` loop of
 `element_multiply()`.)
 
 ## 7) Roofline
-
+Kernel 1 has a FLOPs/byte of 1/6. If we take the GFLOP/s number from earlier
+(17.832, achieved with vectorized L1-sized arrays)
