@@ -74,3 +74,19 @@ write-percentage tests as the buffer has to keep flushing and changing as we
 write.Just compare the 30% read to the 100% read.
 
 ## 4) Queue-Depth Sweep
+![QD Sweep](images/chart07.png)
+*<center>Fig 7: Throughput vs Latency as graphed by sweeping the QD from 1 to
+32. Tests run on 4k blocks with random reads.</center>*
+
+The knee is the point where we hit saturation and latency begins to climb
+faster, as opposed to linearly as it did before (Little's Law). From this chart,
+I would put the knee at a qd of 8, as that's where we see the latency begin to
+take off (chart gets really steep). Increasing the qd passed this point you'll
+start seeing diminishing returns in throughput, while latency continues to
+climb.
+
+## 5) Tail-Latency Characterization
+|  Workload   | Read Avg (us) | Read P50 (us) | Read P95 (us) | Read P99 (us) | Read P99.9 (us) |
+|:-----------:|:-------------:|:-------------:|:-------------:|:-------------:|:---------------:|
+|   qd of 8   |   65.419877   |      60       |      107      |      138      |       191       |
+|   qd of 64  |   152.623251  |      134      |      313      |      423      |       593       |

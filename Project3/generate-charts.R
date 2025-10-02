@@ -174,3 +174,31 @@ ggplot(df_long_lat, aes(x = jobname, y = lat_us, fill = metric_label)) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1)
   )
+
+# --- 1. Read CSV ---
+df <- read_csv("csvs/rand4k_qd_sweep_result.csv")
+
+# --- 2. Extract queue depth from jobname ---
+df <- df %>%
+  mutate(qd = as.numeric(sub("qd", "", jobname))) %>%
+  arrange(qd)
+
+# --- 3. Convert numeric columns ---
+df <- df %>%
+  mutate(
+    read_iops = as.numeric(read_iops),
+    read_mb_s = as.numeric(read_bandwidth_kb) / 1024,
+    read_lat_us = as.numeric(read_clat_mean_us)
+  )
+
+# --- 4. Plot throughput vs latency tradeoff ---
+ggplot(df, aes(x = read_lat_us, y = read_mb_s)) +
+  geom_line(aes(group = 1), linewidth = 1) +
+  geom_point(aes(color = factor(qd)), size = 3) +
+  labs(
+    x = "Average Read Latency (µs)",
+    y = "Read Throughput (MB/s)",
+    color = "Queue Depth",
+    title = "Throughput vs Latency Tradeoff (QD sweep)"
+  ) +
+  theme_classic()

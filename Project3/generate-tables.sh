@@ -29,3 +29,33 @@ FNR>1 {
 
     printf "%-20s %-20s %-20s %-20s %-20s %-20s %-20s\n", $3, read_avg, read_p95, read_p99, write_avg, write_p95, write_p99;
 }' csvs/rand4k_qd1_result.csv csvs/seq128k_qd1_result.csv
+
+awk -F',' '
+BEGIN {
+    printf "%-20s %-20s %-20s %-20s %-20s %-20s\n", "Workload", "Read Avg (us)", "Read P50 (us)", "Read P95 (us)", "Read P99 (us)", "Read P99.9 (us)";
+}
+FNR>1 {
+    read_avg=$16;   # read_clat_mean_us
+    read_p50=""; read_p95=""; read_p99=""; read_p999="";
+
+    for(i=1;i<=NF;i++){
+        if($i ~ /50\.?0*%=/ && read_p50 == ""){
+            split($i,a,"=");
+            read_p50=a[2];
+        }
+        if($i ~ /95\.?0*%=/ && read_p95 == ""){
+            split($i,a,"=");
+            read_p95=a[2];
+        }
+        if($i ~ /99(\.0+)?%=/ && read_p99 == ""){
+            split($i,a,"=");
+            read_p99=a[2];
+        }
+        if($i ~ /^99\.9+0*%=/ && read_p999 == ""){
+            split($i,a,"=");
+            read_p999=a[2];
+        }
+    }
+
+    printf "%-20s %-20s %-20s %-20s %-20s %-20s\n", $3, read_avg, read_p50, read_p95, read_p99, read_p999;
+}' csvs/rand4k_tail_result.csv
