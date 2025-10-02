@@ -28,6 +28,49 @@ can be used.
 | Rand RW 4k  |   59.512150   |      84       |      138      |    8.748372    |       10       |       13       |
 | Seq RW 128k |   45.486553   |      59       |      127      |    33.161176   |       33       |       82       |
 
+This is operating on a raw, actual partition, not a file, so we don't need to
+worry about the OS cacheing anything or anything like that. Additionally, all
+the partitions on my drive are aligned to a MiB boundary.
+
 ## 2) Block-Size Sweep
-![Block-Size Sweep Chart](images/chart01.png)
-*<center>Fig 1: </center>*
+![Block-Size Random Sweep IOPS and MB/s Chart](images/chart01.png)
+![Block-Size Sequential Sweep IOPS and MB/s Chart](images/chart03.png)
+*<center>Figs 1 and 2: IOPS and MB/s measured against block sizes (ranging from
+4 KiB to 256 KiB) for both random and sequential reads. Tested with a qd of
+8.</center>*
+
+At smaller block sizes, there's a lot more overhead as it needs to make many
+requests to read/write to a region of data. As such, we see a high IOPS
+measurement but a low amount of actual throughput (MB/s). However, as the blocks
+get bigger, it makes more sense to talk about MB/s, as the bottleneck of the
+data fetching has moved, and we care more about the internal speed of the SSD
+than we do how many requests we're making to it.
+
+![Block-Size Random Sweep Latency Chart](images/chart02.png)
+![Block-Size Sequential Sweep Latency Chart](images/chart04.png)
+*<center>Figs 3 and 4: Average latency measured against block sizes (ranging
+from 4 KiB to 256 KiB) for both random and sequential reads. Tested with a qd of
+8.</center>*
+
+The larger block size does come with a cost, however. If we're only asking for 4
+KiB of data, the NVMe drive can get it back to us relatively quickly. However if
+we ask for a larger chunk of data, we have to wait longer for it to fetch all
+the data, hence the higher latency. If the goal is to get some small bit of data
+quickly, a small block-size makes more sense, but in the long run, when trying
+to fetch larger amounts of data, it's more efficient to use larger blocks.
+
+## 3) Read/Write Mix
+![Read/Write Ratio Performance](images/chart05.png)
+*<center>Fig 5: Read/write ratio vs performance, measured in IOPS (left axis)
+and MB/s (right axis). Tests run on 4k blocks with random reads/writes and a qd
+of 16.</center>*
+
+![Read/Write Ratio Latency](images/chart06.png)
+*<center>Fig 6: Read/write ratio vs read/write latency. Tests run on 4k blocks
+with random reads/writes and a qd of 16.</center>*
+
+Due to the buffer in the NVMe, we'll see the read latency really suffer on high
+write-percentage tests as the buffer has to keep flushing and changing as we
+write.Just compare the 30% read to the 100% read.
+
+## 4) Queue-Depth Sweep
