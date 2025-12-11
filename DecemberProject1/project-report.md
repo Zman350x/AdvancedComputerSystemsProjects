@@ -26,7 +26,7 @@ chosen the following features:
 1) Zero-copy I/O
 2) Async I/O
 3) Scheduler control groups
-4) Transparent huge pages
+4) Transparent hugepages
 
 ## Tests 1 and 2: Zero-copy I/O and Async I/O
 To test the effects of both zero-copy I/O and async I/O, I have decided to use
@@ -126,3 +126,29 @@ baseline because it has the whole group to itself.
 
 And of course the high priority "fast" group is faster than either, as it both
 has its own group and its group has the maximum possible priority.
+
+## Test 4: Transparent hugepages
+For test 4 I allocated a large amount (2 GiB) of memory, aligned to a 2 MiB
+boundary (the THP page size). I then did a memfill on the whole region,
+followed by iterating over the region with a small-ish, non-one step size of 64.
+This was all timed (including the allocation and memfill).
+
+A second version of the test was run, where the only difference was a single
+line enabling THP for the region. It's quite a simple test, but already the
+benefits of THP were quite apparent.
+
+### Graph 4
+![Memory Access Benchmark with and without THP](images/chart04.png)
+
+### Table 3
+|                   | THP Disabled | THP Enabled |
+|:-----------------:|:------------:|:-----------:|
+| Mean Duration (s) |    0.610     |    0.282    |
+|  Mean CPU Cycles  |  1593932261  |  736145956  |
+
+With THP enabled, this simple program runs over two times as fast. I believe
+most of the speedup to be in the memfill, based on some line-by-line timing I
+was doing in a debugger earlier. That makes sense, as the primary point of THP
+is to make sure that large sections of memory are laid out contiguously and can
+quickly be accessed in an orderly fashion whereas non-contiguous memory would
+take longer when switching between pages.

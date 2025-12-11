@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# DISCLOSURE: SCRIPT MOSTLY GENERATED WITH CHATGPT
-
 mkdir -p csvs
 ulimit -s unlimited
 
