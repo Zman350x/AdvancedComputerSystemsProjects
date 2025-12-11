@@ -22,6 +22,11 @@ ipc_mean <- ipc %>%
 
 print(ipc_mean, n = Inf, width = Inf)
 
+ggplot(data = ipc, aes(x = program, y = duration)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.25, height = 0, colour = "blue", shape = 21) +
+  labs(x = "Program", y = "Duration (s)", title = "IPC Duration by Program Type")
+
 cgroups <- read.csv("csvs/cgroups.csv")
 
 cgroups_mean <- cgroups %>%
@@ -36,3 +41,13 @@ cgroups_mean <- cgroups %>%
             sd_cycles = sd(cycles))
 
 print(cgroups_mean, n = Inf, width = Inf)
+
+ggplot(data = cgroups, aes(x = cgroup, y = duration)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.25, height = 0, colour = "blue", shape = 21) +
+  labs(x = "Group", y = "Duration (s)", title = "Fixed Task Duration by CPU Control Croup")
+
+ggplot(data = filter(cgroups, cgroup != "baseline"), aes(x = cgroup, y = duration)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.25, height = 0, colour = "blue", shape = 21) +
+  labs(x = "Group", y = "Duration (s)", title = "Fixed Task Duration by CPU Control Croup", subtitle = "baseline excluded")

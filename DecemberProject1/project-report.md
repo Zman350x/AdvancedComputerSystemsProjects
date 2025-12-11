@@ -49,8 +49,12 @@ exactly make good use of the time saved by being non-blocking, and ultimately
 just sat around waiting for each number to send anyways.
 
 Each of these programs was run 10 times, and the average durations of each IPC
-method across the 10 tests are listed in the table below.
+method across the 10 tests are listed in the graph and table below.
 
+### Graph 1
+![IPC Duration by Program Type](images/chart01.png)
+
+### Table 1
 |                   |   Baseline   |  Zero-copy  |    Async    |
 |:-----------------:|:------------:|:-----------:|:-----------:|
 | Mean Duration (s) |     11.4     |    2.91     |    25.4     |
@@ -91,7 +95,34 @@ again.
 As with how I ran the IPC tests, I again ran 10 of each trial and averaged them
 out, as seen here.
 
+### Graph 2
+![Fixed Task Duration by CPU Control Group](images/chart02.png)
+
+### Graph 3
+Because the baseline took so much longer than either control group, here's the
+same chart with the baseline excluded so you can tell the difference in the slow
+and fast groups.
+![Fixed Task Duration sans baseline](images/chart03.png)
+
+### Table 2
 |                   |   Baseline   | Slow cgroup | Fast cgroup |
 |:-----------------:|:------------:|:-----------:|:-----------:|
 | Mean Duration (s) |     17.7     |    2.47     |    2.19     |
 |  Mean CPU Cycles  | 46254527263  | 6452014810  | 5718321537  |
+
+Even adding the process to a slower cgroup makes it run significantly faster
+than the baseline which resides in the default system "root" cgroup along with
+my system processes and all 100 useless CPU-wasting processes. From what I can
+gleam from Google, it seems Linux doesn't give priority to individual
+applications based on their weight, but prioritizes the groups themselves and
+then divides the group's time among the processes in the group.
+
+So even if the "root" cgroup (with baseline, 100 CPU-wasters, and system
+processes) is given 50% of the CPU time, that's divided by over 100, and the
+baseline test gets less than 0.5% of the total time. And let's say the "slow"
+group is given only 10% of the CPU (as opposed to the root's 50%), as our test
+is the only thing in that group, it's still given more total CPU time than the
+baseline because it has the whole group to itself.
+
+And of course the high priority "fast" group is faster than either, as it both
+has its own group and its group has the maximum possible priority.
