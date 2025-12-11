@@ -55,10 +55,16 @@ method across the 10 tests are listed in the graph and table below.
 ![IPC Duration by Program Type](images/chart01.png)
 
 ### Table 1
-|                   |   Baseline   |  Zero-copy  |    Async    |
-|:-----------------:|:------------:|:-----------:|:-----------:|
-| Mean Duration (s) |     11.4     |    2.91     |    25.4     |
-|  Mean CPU Cycles  | 29647958444  | 7608492365  | 66317315250 |
+|                    |   Baseline   |  Zero-copy  |    Async    |
+|:------------------:|:------------:|:-----------:|:-----------:|
+| Mean Duration (s)  |     11.4     |    2.91     |    25.4     |
+|  Min Duration (s)  |     10.9     |    1.73     |    23.9     |
+|  Max Duration (s)  |     12.2     |    3.64     |    30.0     |
+| Stdev Duration (s) |    0.568     |    0.689    |    2.07     |
+|  Mean CPU Cycles   | 29647958444  | 7608492365  | 66317315250 |
+|   Min CPU Cycles   | 28584002028  | 4513034222  | 62435220792 |
+|   Max CPU Cycles   | 31851004328  | 9512039806  | 78420297740 |
+|  Stdev CPU Cycles  |  1482553873  | 1797953218  | 5408481926  |
 
 As I had expected, the zero-copy I/O where the two processes directly share
 memory performs significantly better than the baseline. The thing of note here,
@@ -105,10 +111,16 @@ and fast groups.
 ![Fixed Task Duration sans baseline](images/chart03.png)
 
 ### Table 2
-|                   |   Baseline   | Slow cgroup | Fast cgroup |
-|:-----------------:|:------------:|:-----------:|:-----------:|
-| Mean Duration (s) |     17.7     |    2.47     |    2.19     |
-|  Mean CPU Cycles  | 46254527263  | 6452014810  | 5718321537  |
+|                    |   Baseline   | Slow cgroup | Fast cgroup |
+|:------------------:|:------------:|:-----------:|:-----------:|
+| Mean Duration (s)  |     17.7     |    2.47     |    2.19     |
+|  Min Duration (s)  |     12.1     |    1.94     |    1.79     |
+|  Max Duration (s)  |     20.6     |    2.74     |    2.30     |
+| Stdev Duration (s) |     2.45     |    0.247    |    0.181    |
+|  Mean CPU Cycles   | 46254527263  | 6452014810  | 5718321537  |
+|   Min CPU Cycles   | 31723679752  | 5060703304  | 4668373768  |
+|   Max CPU Cycles   | 53682233244  | 7142131854  | 6004101272  |
+|  Stdev CPU Cycles  |  6393947039  |  644601942  |  472835989  |
 
 Even adding the process to a slower cgroup makes it run significantly faster
 than the baseline which resides in the default system "root" cgroup along with
@@ -141,10 +153,16 @@ benefits of THP were quite apparent.
 ![Memory Access Benchmark with and without THP](images/chart04.png)
 
 ### Table 3
-|                   | THP Disabled | THP Enabled |
-|:-----------------:|:------------:|:-----------:|
-| Mean Duration (s) |    0.610     |    0.282    |
-|  Mean CPU Cycles  |  1593932261  |  736145956  |
+|                    | THP Disabled | THP Enabled |
+|:------------------:|:------------:|:-----------:|
+| Mean Duration (s)  |    0.610     |    0.282    |
+|  Min Duration (s)  |    0.605     |    0.279    |
+|  Max Duration (s)  |    0.618     |    0.286    |
+| Stdev Duration (s) |   0.00392    |   0.00273   |
+|  Mean CPU Cycles   |  1593932261  |  736145956  |
+|   Min CPU Cycles   |  1580600708  |  728109715  |
+|   Max CPU Cycles   |  1612779505  |  746264069  |
+|  Stdev CPU Cycles  |   10247064   |   7131000   |
 
 With THP enabled, this simple program runs over two times as fast. I believe
 most of the speedup to be in the memfill, based on some line-by-line timing I
