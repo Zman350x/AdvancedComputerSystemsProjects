@@ -12,6 +12,27 @@ ipc$cycles <- as.numeric(ipc$end_cycles - ipc$start_cycles)
 ipc_mean <- ipc %>%
   group_by(program) %>%
   summarize(mean_duration = mean(duration),
-            mean_cycles = mean(cycles))
+            min_duration = min(duration),
+            max_duration = max(duration),
+            sd_duration = sd(duration),
+            mean_cycles = mean(cycles),
+            min_cycles = min(cycles),
+            max_cycles = max(cycles),
+            sd_cycles = sd(cycles))
 
-print(ipc_mean)
+print(ipc_mean, n = Inf, width = Inf)
+
+cgroups <- read.csv("csvs/cgroups.csv")
+
+cgroups_mean <- cgroups %>%
+  group_by(cgroup) %>%
+  summarize(mean_duration = mean(duration),
+            min_duration = min(duration),
+            max_duration = max(duration),
+            sd_duration = sd(duration),
+            mean_cycles = mean(cycles),
+            min_cycles = min(cycles),
+            max_cycles = max(cycles),
+            sd_cycles = sd(cycles))
+
+print(cgroups_mean, n = Inf, width = Inf)

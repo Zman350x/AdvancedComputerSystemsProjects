@@ -14,6 +14,7 @@
 #include <pmmintrin.h>
 
 using timespan = std::chrono::duration<double, std::nano>;
+using timespanSec = std::chrono::duration<double>;
 
 #define MSG_COUNT 10000000
 
