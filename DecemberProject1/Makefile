@@ -20,7 +20,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
 	mkdir -p $(OBJDIR)
 	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
-$(EXE): $(OBJ)
+$(OUTDIR)/%: $(OBJDIR)/%.o
 	mkdir -p $(OUTDIR)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
 

@@ -15,6 +15,8 @@
 
 using timespan = std::chrono::duration<double, std::nano>;
 
+#define MSG_COUNT 10000000
+
 // EXPERIMENT DATA COLLECTION MACROS
 
 #define TIME(...) { \
