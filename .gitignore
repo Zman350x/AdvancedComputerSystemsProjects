@@ -2,5 +2,6 @@
 output/
 obj-*/
 asm-*/
+obj/
 
 compile_commands.json
