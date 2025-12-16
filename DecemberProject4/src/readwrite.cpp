@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <mutex>
 #include <random>
+#include <shared_mutex>
 #include <thread>
 #include <vector>
 
@@ -18,9 +19,9 @@ enum class Job
     READ_WRITE
 };
 
-// COARSE BST
+// READ/WRITE-LOCKED BST
 
-class CoarseBst
+class ReadWriteBst
 {
 public:
     void insert(uint32_t key, const char *const value);
@@ -29,18 +30,18 @@ public:
     void print();
 private:
     Bst::Node *root = nullptr;
-    std::mutex mtx;
+    std::shared_mutex mtx;
 };
 
-void CoarseBst::insert(uint32_t key, const char *const value)
+void ReadWriteBst::insert(uint32_t key, const char *const value)
 {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::unique_lock lock(mtx); // Write lock
     root = Bst::insert(root, key, value);
 }
 
-char *CoarseBst::find(uint32_t key)
+char *ReadWriteBst::find(uint32_t key)
 {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::shared_lock lock(mtx); // Read lock
     Bst::Node *temp = Bst::find(root, key);
 
     if (temp == nullptr)
@@ -49,21 +50,21 @@ char *CoarseBst::find(uint32_t key)
     return temp->value;
 }
 
-void CoarseBst::erase(uint32_t key)
+void ReadWriteBst::erase(uint32_t key)
 {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::unique_lock lock(mtx); // Write lock
     root = Bst::erase(root, key);
 }
 
-void CoarseBst::print()
+void ReadWriteBst::print()
 {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::shared_lock lock(mtx); // Read lock
     Bst::printTree(root);
 }
 
 // THREADING
 
-void worker(int id, CoarseBst &tree, int keyCount, uint32_t opCount, Job job)
+void worker(int id, ReadWriteBst &tree, int keyCount, uint32_t opCount, Job job)
 {
     thread_local std::minstd_rand rng(id + std::random_device{}());
     std::uniform_int_distribution<uint32_t> keyDist(0, keyCount - 1);
@@ -104,7 +105,7 @@ int main(int argc, char **argv)
 {
     performanceSetup();
 
-    CoarseBst tree;
+    ReadWriteBst tree;
 
     if (argc < 3)
         return 1;
@@ -135,7 +136,7 @@ int main(int argc, char **argv)
     timespanSec timeDiff = endTime - startTime;
     uint64_t cycles = endCycles - startCycles;
 
-    std::cout << "coarse,write_only," << threadCount << ","<< keyCount << "," <<
+    std::cout << "read_write,write_only," << threadCount << ","<< keyCount << "," <<
                  timeDiff.count() << "," << cycles << std::endl;
 
     // RESET
@@ -161,7 +162,7 @@ int main(int argc, char **argv)
     timeDiff = endTime - startTime;
     cycles = endCycles - startCycles;
 
-    std::cout << "coarse,read_only," << threadCount << ","<< keyCount << "," <<
+    std::cout << "read_write,read_only," << threadCount << ","<< keyCount << "," <<
                  timeDiff.count() << "," << cycles << std::endl;
 
     // RESET
@@ -187,7 +188,7 @@ int main(int argc, char **argv)
     timeDiff = endTime - startTime;
     cycles = endCycles - startCycles;
 
-    std::cout << "coarse,read_write," << threadCount << ","<< keyCount << "," <<
+    std::cout << "read_write,read_write," << threadCount << ","<< keyCount << "," <<
                  timeDiff.count() << "," << cycles << std::endl;
 
     return 0;
