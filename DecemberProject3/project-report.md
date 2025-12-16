@@ -26,4 +26,4 @@ the document). There is a set seed that all of the filters use for their
 hashing, so the results of the program should be identical on each run.
 
 So far, I have implemented a basic hashset (not strictly necessary), a
-blocked bloom filter, and am mostly done with an XOR filter.
+blocked bloom filter, and an XOR filter.

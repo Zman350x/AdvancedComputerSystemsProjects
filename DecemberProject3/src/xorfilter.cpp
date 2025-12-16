@@ -1,10 +1,17 @@
 #include "xorfilter.h"
 #include "MurmurHash3.h"
+#include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 
 // Based in part on https://github.com/FastFilter/xor_singleheader/blob/master/include/xorfilter.h
 
-bool XorFilter::build(const std::vector<uint64_t>& keys)
+static inline uint64_t rotl64(uint64_t n, unsigned int c);
+static inline uint32_t reduce(uint32_t hash, uint32_t n);
+static inline uint64_t xorFingerprint(uint64_t hash);
+static size_t xorSortAndRemoveDup(std::vector<uint64_t>& keys);
+
+bool XorFilter::build(std::vector<uint64_t> keys)
 {
     size = keys.size();
     if (size == 0)
@@ -13,6 +20,8 @@ bool XorFilter::build(const std::vector<uint64_t>& keys)
     capacity = 32 + 1.23 * size;
     capacity = capacity / 3 * 3;
     blockLength = capacity / 3;
+
+    id = 0;
 
     fingerprints.clear();
     fingerprints.resize(capacity);
@@ -28,6 +37,16 @@ bool XorFilter::build(const std::vector<uint64_t>& keys)
     uint32_t i;
     for (i = 0; i < 1024; ++i) // 1024 is a timout
     {
+        if (i == 10)
+            size = xorSortAndRemoveDup(keys);
+
+        sets0.clear();
+        sets0.resize(blockLength);
+        sets1.clear();
+        sets1.resize(blockLength);
+        sets2.clear();
+        sets2.resize(blockLength);
+
         for (size_t j = 0; j < size; ++j)
         {
             XorHashes hashes = getHashes(keys[j]);
@@ -43,24 +62,24 @@ bool XorFilter::build(const std::vector<uint64_t>& keys)
 
         for (size_t j = 0; j < blockLength; ++j)
         {
-            if (sets0[i].count == 1)
+            if (sets0[j].count == 1)
             {
-                q0[q0Size].index = (uint32_t)i;
-                q0[q0Size].hash = sets0[i].xorMask;
+                q0[q0Size].index = (uint32_t)j;
+                q0[q0Size].hash = sets0[j].xorMask;
                 ++q0Size;
             }
 
-            if (sets1[i].count == 1)
+            if (sets1[j].count == 1)
             {
-                q1[q1Size].index = (uint32_t)i;
-                q1[q1Size].hash = sets1[i].xorMask;
+                q1[q1Size].index = (uint32_t)j;
+                q1[q1Size].hash = sets1[j].xorMask;
                 ++q1Size;
             }
 
-            if (sets2[i].count == 1)
+            if (sets2[j].count == 1)
             {
-                q2[q2Size].index = (uint32_t)i;
-                q2[q2Size].hash = sets2[i].xorMask;
+                q2[q2Size].index = (uint32_t)j;
+                q2[q2Size].hash = sets2[j].xorMask;
                 ++q2Size;
             }
         }
@@ -77,30 +96,126 @@ bool XorFilter::build(const std::vector<uint64_t>& keys)
                 uint32_t h1 = getH1(keyIndex.hash);
                 uint32_t h2 = getH2(keyIndex.hash);
 
+                stack[stackSize++] = keyIndex;
 
+                sets1[h1].xorMask ^= keyIndex.hash;
+                --sets1[h1].count;
+                if (sets1[h1].count == 1)
+                {
+                    q1[q1Size].index = h1;
+                    q1[q1Size].hash = sets1[h1].xorMask;
+                    ++q1Size;
+                }
+
+                sets2[h2].xorMask ^= keyIndex.hash;
+                --sets2[h2].count;
+                if (sets2[h2].count == 1)
+                {
+                    q2[q2Size].index = h2;
+                    q2[q2Size].hash = sets2[h2].xorMask;
+                    ++q2Size;
+                }
+            }
+            while (q1Size > 0)
+            {
+                KeyIndex keyIndex = q1[--q1Size];
+                if (sets1[keyIndex.index].count == 0)
+                    continue;
+
+                uint32_t h0 = getH0(keyIndex.hash);
+                uint32_t h2 = getH2(keyIndex.hash);
+                keyIndex.index += blockLength;
+
+                stack[stackSize++] = keyIndex;
+
+                sets0[h0].xorMask ^= keyIndex.hash;
+                --sets0[h0].count;
+                if (sets0[h0].count == 1)
+                {
+                    q0[q0Size].index = h0;
+                    q0[q0Size].hash = sets0[h0].xorMask;
+                    ++q0Size;
+                }
+
+                sets2[h2].xorMask ^= keyIndex.hash;
+                --sets2[h2].count;
+                if (sets2[h2].count == 1)
+                {
+                    q2[q2Size].index = h2;
+                    q2[q2Size].hash = sets2[h2].xorMask;
+                    ++q2Size;
+                }
+            }
+            while (q2Size > 0)
+            {
+                KeyIndex keyIndex = q2[--q2Size];
+                if (sets2[keyIndex.index].count == 0)
+                    continue;
+
+                uint32_t h0 = getH0(keyIndex.hash);
+                uint32_t h1 = getH1(keyIndex.hash);
+                keyIndex.index += 2 * blockLength;
+
+                stack[stackSize++] = keyIndex;
+
+                sets0[h0].xorMask ^= keyIndex.hash;
+                --sets0[h0].count;
+                if (sets0[h0].count == 1)
+                {
+                    q0[q0Size].index = h0;
+                    q0[q0Size].hash = sets0[h0].xorMask;
+                    ++q0Size;
+                }
+
+                sets1[h1].xorMask ^= keyIndex.hash;
+                --sets1[h1].count;
+                if (sets1[h1].count == 1)
+                {
+                    q1[q1Size].index = h1;
+                    q1[q1Size].hash = sets1[h1].xorMask;
+                    ++q1Size;
+                }
             }
         }
+
+        if (stackSize == size)
+            break; // Success
+
+        ++id;
     }
 
     if (i == 1024) // if timed out
         return false;
+
+    uint8_t *fingerprints0 = fingerprints.data();
+    uint8_t *fingerprints1 = fingerprints.data() + blockLength;
+    uint8_t *fingerprints2 = fingerprints.data() + 2 * blockLength;
+
+    size_t stackSize = size;
+    while (stackSize > 0)
+    {
+        KeyIndex keyIndex = stack[--stackSize];
+        uint64_t f = xorFingerprint(keyIndex.hash);
+        if (keyIndex.index < blockLength)
+            f ^= (uint32_t)fingerprints1[getH1(keyIndex.hash)] ^ fingerprints2[getH2(keyIndex.hash)];
+        else if (keyIndex.index < 2 * blockLength)
+            f ^= (uint32_t)fingerprints0[getH0(keyIndex.hash)] ^ fingerprints2[getH2(keyIndex.hash)];
+        else
+            f ^= (uint32_t)fingerprints0[getH0(keyIndex.hash)] ^ fingerprints1[getH1(keyIndex.hash)];
+
+        fingerprints[keyIndex.index] = (uint8_t) f;
+    }
 
     return true;
 }
 
 bool XorFilter::query(uint64_t key)
 {
-    return false;
-}
-
-static inline uint64_t rotl64(uint64_t n, unsigned int c)
-{
-    return (n << (c & 63U)) | (n >> ((-c) & 63U));
-}
-
-static inline uint32_t reduce(uint32_t hash, uint32_t n) {
-    // http://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
-    return (uint32_t)(((uint64_t)hash * n) >> 32U);
+    XorHashes hashes = getHashes(key);
+    hashes.h1 += blockLength;
+    hashes.h2 += 2 * blockLength;
+    uint8_t f = (uint8_t) xorFingerprint(hashes.h);
+    return f == ((uint32_t) fingerprints[hashes.h0] ^ fingerprints[hashes.h1] ^ fingerprints[hashes.h2]);
 }
 
 uint64_t XorFilter::hash(uint32_t id, uint64_t key)
@@ -113,7 +228,7 @@ uint64_t XorFilter::hash(uint32_t id, uint64_t key)
 XorHashes XorFilter::getHashes(uint64_t key)
 {
     XorHashes hashes;
-    hashes.h = hash(0, key);
+    hashes.h = hash(id, key);
     hashes.h0 = reduce((uint32_t) hashes.h, blockLength);
     hashes.h1 = reduce((uint32_t) rotl64(hashes.h, 21), blockLength);
     hashes.h2 = reduce((uint32_t) rotl64(hashes.h, 42), blockLength);
@@ -133,4 +248,34 @@ uint32_t XorFilter::getH1(uint64_t hash)
 uint32_t XorFilter::getH2(uint64_t hash)
 {
     return reduce((uint32_t) rotl64(hash, 42), blockLength);
+}
+
+static inline uint64_t rotl64(uint64_t n, unsigned int c)
+{
+    return (n << (c & 63U)) | (n >> ((-c) & 63U));
+}
+
+static inline uint32_t reduce(uint32_t hash, uint32_t n)
+{
+    // http://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
+    return (uint32_t)(((uint64_t)hash * n) >> 32U);
+}
+
+static inline uint64_t xorFingerprint(uint64_t hash)
+{
+    return (hash ^ (hash >> 32U));
+}
+
+static size_t xorSortAndRemoveDup(std::vector<uint64_t>& keys)
+{
+    std::sort(keys.begin(), keys.end());
+    size_t j = 1;
+    for(size_t i = 1; i < keys.size(); ++i) {
+        if(keys[i] != keys[i-1])
+        {
+            keys[j] = keys[i];
+            ++j;
+        }
+    }
+    return j;
 }

@@ -27,7 +27,7 @@ struct XorHashes
 class XorFilter : BaseFilter
 {
 public:
-    bool build(const std::vector<uint64_t>& keys) override;
+    bool build(std::vector<uint64_t> keys) override;
     bool query(uint64_t key) override;
 
 private:
@@ -37,7 +37,7 @@ private:
     uint32_t getH1(uint64_t hash);
     uint32_t getH2(uint64_t hash);
     size_t size, capacity;
-    uint32_t blockLength;
+    uint32_t blockLength, id;
 
     std::vector<uint8_t> fingerprints;
 };
