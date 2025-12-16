@@ -45,10 +45,12 @@ Tests were run with all combinations of the following parameters:
 
 That means there's 90 different test categories, and each was run 10 times.
 
-## Results Table
+## Results Data
 There is a TON of raw data from this project. Here's a table with the results of
 all 90 tests (only the means of each 10-trial batch is shown so this data isn't
-*too overwhelming*). Filtered/analyzed data is later in the report.
+*too overwhelming*). Charts are provided afterwards, which makes it more
+reasonable to comprehend the data. Actual data analysis is located at the end of
+the report.
 
 ### Table 1
 |  locking   |    job     | threads | keys  | mean_duration | mean_cycles |
@@ -144,7 +146,6 @@ all 90 tests (only the means of each 10-trial batch is shown so this data isn't
 | read_write | write_only |   12    | 1e+05 |   0.0200600   |  52377829   |
 | read_write | write_only |   12    | 1e+06 |   0.0229962   |  60044613   |
 
-## Read-Only Results
 ### Chart 1
 ![Read-only 1mil key](images/chart01.png)
 
@@ -154,7 +155,6 @@ all 90 tests (only the means of each 10-trial batch is shown so this data isn't
 ### Chart 3
 ![Read-only 10k key](images/chart07.png)
 
-## Write-Only Results
 ### Chart 4
 ![Write-only 1mil key](images/chart02.png)
 
@@ -164,7 +164,6 @@ all 90 tests (only the means of each 10-trial batch is shown so this data isn't
 ### Chart 6
 ![Write-only 10k key](images/chart08.png)
 
-## 70/30 Read/Write Results
 ### Chart 7
 ![Read/write 1mil key](images/chart03.png)
 
@@ -173,3 +172,9 @@ all 90 tests (only the means of each 10-trial batch is shown so this data isn't
 
 ### Chart 9
 ![Read/write  10k key](images/chart09.png)
+
+## Results analysis
+Looking at the read-only data, there are two trends worth noticing. The average
+duration increases as we add more threads, and using the read/write locking
+makes it take significantly longer than even the slowest coarse-locking option.
+Even with 100k read operations, 
