@@ -19,3 +19,11 @@ cpdf Rplots.pdf -gs gs -output-image -o images/chart%%.png
 Of course, the ability to run some of these commands on your machine depends on
 having the proper packages installed on your system, namely the 'R' language
 (and some R libraries) and 'cpdf'/'gs' for pdf->png conversion.
+
+## Choices & Process
+For the hashing, I have gone with Murmur3 (one of the hashing options listed in
+the document). There is a set seed that all of the filters use for their
+hashing, so the results of the program should be identical on each run.
+
+So far, I have implemented a basic hashset (not strictly necessary) and a
+blocked bloom filter.
