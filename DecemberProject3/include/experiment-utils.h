@@ -18,6 +18,9 @@
 using timespan = std::chrono::duration<double, std::nano>;
 using timespanSec = std::chrono::duration<double>;
 
+// My CPU has a 64B cache line
+#define CACHE_LINE_BITS 512
+
 #define MSG_COUNT 10000000
 
 // EXPERIMENT DATA COLLECTION MACROS
@@ -83,6 +86,7 @@ using timespanSec = std::chrono::duration<double>;
 
 // Random values generated in range [-LIMIT, LIMIT]
 #define LIMIT 10000
+#define __NOP() asm volatile("nop")
 
 // TESTS
 
@@ -126,7 +130,7 @@ void element_multiply(T arr1[], T arr2[], T output[], size_t length)
 
 // HELPER FUNCTIONS
 
-void performanceSetup()
+void inline performanceSetup()
 {
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
     _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);

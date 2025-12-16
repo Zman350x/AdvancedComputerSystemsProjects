@@ -4,14 +4,15 @@
 #include <cstdint>
 #include <list>
 #include <vector>
+#include "base-filter.h"
 
-class HashSet
+class HashSet : BaseFilter
 {
 public:
     HashSet(size_t size) : size(size), table(size) { }
-    void insert(uint64_t key);
-    void remove(uint64_t key);
-    bool contains(uint64_t key);
+    void insert(uint64_t key) override;
+    void remove(uint64_t key) override;
+    bool query(uint64_t key) override;
 
 private:
     const size_t size;
