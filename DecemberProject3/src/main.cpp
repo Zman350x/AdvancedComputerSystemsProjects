@@ -1,17 +1,19 @@
 #include "experiment-utils.h"
 #include "blockedbloom.h"
+#include "xorfilter.h"
 
 int main()
 {
     performanceSetup();
 
-    BlockedBloom bloom(10000, 0.05);
+    XorFilter xorFilter;
+
+    std::vector<uint64_t> keys;
 
     for (int i = 0; i < 10000; ++i)
-        bloom.insert(i);
+        keys.emplace_back(i);
 
-    for (int i = 0; i < 10000; ++i)
-        bloom.query(i);
+    xorFilter.build(keys);
 
     __NOP();
 

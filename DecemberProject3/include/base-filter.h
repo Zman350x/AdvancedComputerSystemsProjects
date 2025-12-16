@@ -10,7 +10,7 @@
 class BaseFilter
 {
 public:
-    virtual void build(const std::vector<uint64_t>& keys) { }
+    virtual bool build(const std::vector<uint64_t>& keys) { return false; }
     virtual void insert(uint64_t key) { }
     virtual void remove(uint64_t key) { }
     virtual bool query(uint64_t key) { return false; }
