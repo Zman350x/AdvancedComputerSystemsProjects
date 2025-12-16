@@ -25,12 +25,12 @@ class ReadWriteBst
 {
 public:
     void insert(uint32_t key, const char *const value);
-    char *find(uint32_t key);
+    char *find(uint32_t key) const;
     void erase(uint32_t key);
-    void print();
+    void print() const;
 private:
     Bst::Node *root = nullptr;
-    std::shared_mutex mtx;
+    mutable std::shared_mutex mtx;
 };
 
 void ReadWriteBst::insert(uint32_t key, const char *const value)
@@ -39,7 +39,7 @@ void ReadWriteBst::insert(uint32_t key, const char *const value)
     root = Bst::insert(root, key, value);
 }
 
-char *ReadWriteBst::find(uint32_t key)
+char *ReadWriteBst::find(uint32_t key) const
 {
     std::shared_lock lock(mtx); // Read lock
     Bst::Node *temp = Bst::find(root, key);
@@ -56,7 +56,7 @@ void ReadWriteBst::erase(uint32_t key)
     root = Bst::erase(root, key);
 }
 
-void ReadWriteBst::print()
+void ReadWriteBst::print() const
 {
     std::shared_lock lock(mtx); // Read lock
     Bst::printTree(root);

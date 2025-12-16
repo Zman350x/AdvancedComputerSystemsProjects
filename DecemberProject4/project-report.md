@@ -177,4 +177,34 @@ the report.
 Looking at the read-only data, there are two trends worth noticing. The average
 duration increases as we add more threads, and using the read/write locking
 makes it take significantly longer than even the slowest coarse-locking option.
-Even with 100k read operations, 
+With a coarse-lock, only one thread can access the structure at a time. If every
+read is blocking, you might as well do it single-threaded. What's surprising to
+me is that the reader/writer lock is so much slower than the coarse lock. I
+guess even with 100k read operations, there's enough overhead to the more
+complex mutex option to slow it significantly, even if all threads can read
+simultaneously.
+
+The write-only data is pretty flat regardless of locking type or number of
+threads. Once again we see slight rises in the average duration as the number of
+threads increases, but it's less consistent than in the read-only data.
+Additionally, there's no discernible difference between coarse and reader/writer
+locking. I suspect that because we're always writing, it's always using an
+exclusive ("write") lock as opposed to a shared ("read") lock so it's just
+essentially doing coarse locking anyways.
+
+The 70/30 read/write data looks somewhere in-between the read-only and
+write-only data. It's has the visible difference in durations between locking
+types like read-only, but is flatter on average and more prone to spikes and a
+wider standard deviation like the write-only. This doesn't surprise me at all.
+It spends 70% of its time reading and 30% writing, so of course it looks like a
+mix of the extremes. The only place an interesting interaction could come from
+is if one thread is reading and the other is writing (not possible in the other
+tests), but in that case the writing takes priority with the exclusive lock.
+
+The one other factor at play here is the number of possible keys in the tree.
+While there doesn't appear to be any difference on read-only, we do see the
+durations increase with the number of keys on the write-only and 70/30 tests.
+Looking at **Chart 9** with 10k keys, you can see the bars for the coarse
+locking centered a little above 0.004s. In **Chart 8** with 100k keys, they
+hover around 0.008s, and with 1 million keys in **Chart 7**, they're between
+0.009s and 0.010s.

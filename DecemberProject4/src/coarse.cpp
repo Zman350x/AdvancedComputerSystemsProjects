@@ -24,12 +24,12 @@ class CoarseBst
 {
 public:
     void insert(uint32_t key, const char *const value);
-    char *find(uint32_t key);
+    char *find(uint32_t key) const;
     void erase(uint32_t key);
-    void print();
+    void print() const;
 private:
     Bst::Node *root = nullptr;
-    std::mutex mtx;
+    mutable std::mutex mtx;
 };
 
 void CoarseBst::insert(uint32_t key, const char *const value)
@@ -38,7 +38,7 @@ void CoarseBst::insert(uint32_t key, const char *const value)
     root = Bst::insert(root, key, value);
 }
 
-char *CoarseBst::find(uint32_t key)
+char *CoarseBst::find(uint32_t key) const
 {
     std::lock_guard<std::mutex> lock(mtx);
     Bst::Node *temp = Bst::find(root, key);
@@ -55,7 +55,7 @@ void CoarseBst::erase(uint32_t key)
     root = Bst::erase(root, key);
 }
 
-void CoarseBst::print()
+void CoarseBst::print() const
 {
     std::lock_guard<std::mutex> lock(mtx);
     Bst::printTree(root);
